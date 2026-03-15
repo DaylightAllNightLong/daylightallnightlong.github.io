@@ -13,53 +13,15 @@
       flex-direction: row;
       min-height: 100vh;
     }
-
-    .content {
-      flex: 3;
-      padding: 20px;
-    }
-
-    .ranking {
-      flex: 1;
-      padding: 20px;
-      background: #222;
-      border-left: 2px solid #444;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-    }
-
-    th, td {
-      border: 1px solid #444;
-      padding: 10px;
-      text-align: left;
-    }
-
-    th {
-      background: #333;
-    }
-
-    img {
-      max-width: 100px;
-      height: auto;
-      display: block;
-    }
-
-    h2 {
-      margin-top: 0;
-    }
-
-    ul {
-      list-style: decimal;
-      padding-left: 20px;
-    }
-
-    li {
-      margin-bottom: 10px;
-    }
+    .content { flex: 3; padding: 20px; }
+    .ranking { flex: 1; padding: 20px; background: #222; border-left: 2px solid #444; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { border: 1px solid #444; padding: 10px; text-align: left; }
+    th { background: #333; }
+    img { max-width: 100px; height: auto; display: block; }
+    h2 { margin-top: 0; }
+    ul { list-style: decimal; padding-left: 20px; }
+    li { margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -75,17 +37,13 @@
           <th>Year</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Album rows will be injected here -->
-      </tbody>
+      <tbody></tbody>
     </table>
   </div>
 
   <div class="ranking">
     <h2>Top Ranked Albums</h2>
-    <ul id="rankingList">
-      <!-- Ranking list will be injected here -->
-    </ul>
+    <ul id="rankingList"></ul>
   </div>
 
   <script>
@@ -94,21 +52,36 @@
     fetch(sheetUrl)
       .then(response => response.json())
       .then(data => {
+        console.log('Data loaded from sheet:', data); // Debug
+
+        if (!data || !data.length) {
+          throw new Error('No data found in sheet.');
+        }
+
         const tableBody = document.querySelector('#albumTable tbody');
         const rankingList = document.getElementById('rankingList');
 
-        // Sort albums by ranking (F) descending
-        const rankedAlbums = [...data].sort((a, b) => parseFloat(b['F']) - parseFloat(a['F']));
+        // Use the correct column names from your sheet
+        // Adjust these if your sheet headers are different
+        const ALBUM = Object.keys(data[0])[0]; // Column A
+        const ARTIST = Object.keys(data[0])[1]; // Column B
+        const REVIEW = Object.keys(data[0])[2]; // Column C
+        const PHOTO = Object.keys(data[0])[3]; // Column D
+        const YEAR = Object.keys(data[0])[4]; // Column E
+        const RANK = Object.keys(data[0])[5]; // Column F
+
+        // Sort albums by ranking descending
+        const rankedAlbums = [...data].sort((a, b) => parseFloat(b[RANK]) - parseFloat(a[RANK]));
 
         // Populate table
         data.forEach(album => {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${album['A']}</td>
-            <td>${album['B']}</td>
-            <td>${album['C']}</td>
-            <td>${album['D'] ? `<img src="${album['D']}" alt="${album['A']} cover">` : ''}</td>
-            <td>${album['E']}</td>
+            <td>${album[ALBUM]}</td>
+            <td>${album[ARTIST]}</td>
+            <td>${album[REVIEW]}</td>
+            <td>${album[PHOTO] ? `<img src="${album[PHOTO]}" alt="${album[ALBUM]} cover">` : ''}</td>
+            <td>${album[YEAR]}</td>
           `;
           tableBody.appendChild(row);
         });
@@ -116,12 +89,14 @@
         // Populate ranking list
         rankedAlbums.forEach(album => {
           const li = document.createElement('li');
-          li.textContent = album['A'];
+          li.textContent = album[ALBUM];
           rankingList.appendChild(li);
         });
       })
       .catch(error => {
         console.error('Error fetching album data:', error);
+        const tableBody = document.querySelector('#albumTable tbody');
+        tableBody.innerHTML = '<tr><td colspan="5">Error loading data. Check console.</td></tr>';
       });
   </script>
 </body>
