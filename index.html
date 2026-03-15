@@ -6,103 +6,140 @@
 <style>
   body {
     font-family: Arial, sans-serif;
-    max-width: 1000px;
-    margin: auto;
     background: #111;
-    color: white;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    min-height: 100vh;
+  }
+  .container {
+    display: flex;
+    flex: 1;
+  }
+  .main {
+    flex: 3;
     padding: 20px;
   }
-  .page { display: flex; gap: 40px; }
-  #albums { flex: 3; }
-  #ranking {
+  .sidebar {
     flex: 1;
+    background: #222;
+    padding: 20px;
     border-left: 1px solid #444;
-    padding-left: 20px;
-    height: fit-content;
-    position: sticky;
-    top: 20px;
   }
-  .album {
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
     border-bottom: 1px solid #444;
-    padding: 20px 0;
-    display: flex;
-    gap: 20px;
-    align-items: center;
+    padding: 10px;
+    text-align: left;
+  }
+  th {
+    background: #333;
   }
   img {
-    width: 120px;
-    height: 120px;
-    object-fit: cover;
-    background: #222;
-    border-radius: 4px;
+    max-width: 100px;
+    height: auto;
   }
-  h2 { margin: 0 0 10px 0; }
-  .year { color: #888; font-weight: normal; }
-  .rank-item { margin-bottom: 10px; font-size: 0.9rem; }
-  .rank-num { color: #00d1b2; font-weight: bold; margin-right: 8px; }
+  .sidebar h2 {
+    margin-top: 0;
+    font-size: 1.2em;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+  }
+  .sidebar ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  .sidebar li {
+    padding: 5px 0;
+  }
 </style>
 </head>
 <body>
 
-<h1>Album Reviews</h1>
-
-<div class="page">
-  <div id="albums">Loading reviews...</div>
-  <div id="ranking">
-    <h2>Ranking</h2>
-    <div id="ranking-list"></div>
+<div class="container">
+  <div class="main">
+    <h1>Album Reviews</h1>
+    <table id="albumTable">
+      <thead>
+        <tr>
+          <th>Album</th>
+          <th>Artist</th>
+          <th>Review</th>
+          <th>Photo</th>
+          <th>Year</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="sidebar">
+    <h2>Top Ranked Albums</h2>
+    <ul id="rankedList"></ul>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
 <script>
-  // This is your "Publish to Web" ID converted to a direct CSV download link
-  const sheetID = "2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3";
-  const csvURL = `https://docs.google.com/spreadsheets/d/e/${sheetID}/pub?output=csv`;
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/pub?gid=0&single=true&output=csv';
 
-  Papa.parse(csvURL, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      const albums = results.data;
-      const albumContainer = document.getElementById("albums");
-      const rankingList = document.getElementById("ranking-list");
+async function fetchData() {
+  const response = await fetch(csvUrl);
+  const data = await response.text();
+  return data;
+}
 
-      // Clear loading text
-      albumContainer.innerHTML = "";
+function parseCSV(csvText) {
+  const rows = csvText.trim().split('\n').map(r => r.split(','));
+  const headers = rows.shift(); // remove header row
+  return rows.map(row => ({
+    album: row[0],
+    artist: row[1],
+    review: row[2],
+    photo: row[3],
+    year: row[4],
+    rank: parseFloat(row[5])
+  }));
+}
 
-      // 1. Main List (Original Order)
-      albums.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "album";
-        div.innerHTML = `
-          <img src="${item.Cover || item.Photo || ''}" alt="Cover">
-          <div>
-            <h2>${item.Album} <span class="year">(${item.Year || ''})</span></h2>
-            <p>${item.Review || ''}</p>
-          </div>
-        `;
-        albumContainer.appendChild(div);
-      });
-
-      // 2. Ranking Sidebar (Sorted by the 'Ranking' column)
-      const sorted = [...albums].sort((a, b) => parseFloat(b.Ranking || 0) - parseFloat(a.Ranking || 0));
-      
-      sorted.forEach((item, i) => {
-        if(item.Album) {
-          const p = document.createElement("div");
-          p.className = "rank-item";
-          p.innerHTML = `<span class="rank-num">#${i + 1}</span> ${item.Album}`;
-          rankingList.appendChild(p);
-        }
-      });
-    },
-    error: function(err) {
-      document.getElementById("albums").innerHTML = "Error loading data. Make sure 'Publish to Web' is set to CSV.";
-    }
+function renderTable(albums) {
+  const tbody = document.querySelector('#albumTable tbody');
+  tbody.innerHTML = '';
+  albums.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${a.album}</td>
+      <td>${a.artist}</td>
+      <td>${a.review}</td>
+      <td>${a.photo ? `<img src="${a.photo}" alt="${a.album}">` : ''}</td>
+      <td>${a.year}</td>
+    `;
+    tbody.appendChild(tr);
   });
+}
+
+function renderSidebar(albums) {
+  const ul = document.getElementById('rankedList');
+  ul.innerHTML = '';
+  // Sort descending by rank
+  const sorted = albums.slice().sort((a, b) => b.rank - a.rank);
+  sorted.forEach(a => {
+    const li = document.createElement('li');
+    li.textContent = a.album;
+    ul.appendChild(li);
+  });
+}
+
+async function init() {
+  const csvText = await fetchData();
+  const albums = parseCSV(csvText);
+  renderTable(albums);
+  renderSidebar(albums);
+}
+
+init();
 </script>
 
 </body>
