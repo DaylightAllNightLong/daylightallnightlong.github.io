@@ -9,18 +9,61 @@
     background: #111;
     color: #fff;
     margin: 0;
-    padding: 0;
     display: flex;
     min-height: 100vh;
   }
+
   .container {
     display: flex;
     flex: 1;
   }
+
+  /* Main album feed */
   .main {
     flex: 3;
     padding: 20px;
   }
+
+  .album-card {
+    display: flex;
+    background: #1a1a1a;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 10px #000;
+  }
+
+  .album-card img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+  }
+
+  .album-info {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .album-title {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .album-artist {
+    font-size: 1em;
+    color: #aaa;
+    margin: 5px 0 10px 0;
+  }
+
+  .album-review {
+    font-size: 0.95em;
+    line-height: 1.4em;
+  }
+
+  /* Sidebar */
   .sidebar {
     flex: 1;
     background: #222;
@@ -31,49 +74,20 @@
     height: 100vh;
     overflow-y: auto;
   }
+
   .sidebar h2 {
     margin-top: 0;
     font-size: 1.2em;
     border-bottom: 1px solid #444;
     padding-bottom: 5px;
   }
-  .sidebar ul {
-    list-style: none;
-    padding-left: 0;
+
+  .sidebar ol {
+    padding-left: 20px;
   }
+
   .sidebar li {
     padding: 5px 0;
-  }
-  .album-card {
-    display: flex;
-    background: #1a1a1a;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 0 10px #000;
-  }
-  .album-card img {
-    width: 150px;
-    object-fit: cover;
-  }
-  .album-info {
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-  }
-  .album-title {
-    font-size: 1.4em;
-    font-weight: bold;
-    margin: 0;
-  }
-  .album-artist {
-    font-size: 1em;
-    color: #aaa;
-    margin: 5px 0 10px 0;
-  }
-  .album-review {
-    font-size: 0.95em;
-    line-height: 1.4em;
   }
 </style>
 </head>
@@ -86,7 +100,7 @@
   </div>
   <div class="sidebar">
     <h2>Top Ranked Albums</h2>
-    <ul id="rankedList"></ul>
+    <ol id="rankedList"></ol>
   </div>
 </div>
 
@@ -131,13 +145,13 @@ function renderAlbums(albums) {
 }
 
 function renderSidebar(albums) {
-  const ul = document.getElementById('rankedList');
-  ul.innerHTML = '';
+  const ol = document.getElementById('rankedList');
+  ol.innerHTML = '';
   const sorted = albums.slice().sort((a, b) => b.rank - a.rank);
   sorted.forEach(a => {
     const li = document.createElement('li');
     li.textContent = a.album;
-    ul.appendChild(li);
+    ol.appendChild(li);
   });
 }
 
