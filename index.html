@@ -4,101 +4,166 @@
 <meta charset="UTF-8">
 <title>Album Reviews</title>
 <style>
+  :root {
+    --bg-color: #0d0d0d;
+    --card-bg: #181818;
+    --accent: #e50914; /* A little red for some pop */
+    --text-main: #ffffff;
+    --text-muted: #a0a0a0;
+  }
+
   body {
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: #fff;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg-color);
+    color: var(--text-main);
     margin: 0;
     display: flex;
-    min-height: 100vh;
+    justify-content: center;
   }
 
   .container {
     display: flex;
-    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    gap: 30px;
+    padding: 20px;
   }
 
+  /* Main Feed Section */
   .main {
     flex: 3;
-    padding: 20px;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 
   .album-card {
     display: flex;
-    background: #1a1a1a;
-    margin-bottom: 20px;
-    border-radius: 8px;
+    background: var(--card-bg);
+    margin-bottom: 25px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 0 10px #000;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #222;
+  }
+
+  .album-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    border-color: #333;
   }
 
   .album-card img {
-    width: 150px;
-    height: 150px;
+    width: 200px;
+    height: 200px;
     object-fit: cover;
+    border-right: 1px solid #222;
   }
 
   .album-info {
-    padding: 15px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+  }
+
+  .album-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
   }
 
   .album-title {
-    font-size: 1.4em;
-    font-weight: bold;
+    font-size: 1.6rem;
+    font-weight: 800;
     margin: 0;
+    color: var(--text-main);
   }
 
   .album-artist {
-    font-size: 1em;
-    color: #aaa;
-    margin: 5px 0 10px 0;
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin: 5px 0;
+    font-weight: 600;
+  }
+
+  .album-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 15px;
   }
 
   .album-review {
-    font-size: 0.95em;
-    line-height: 1.4em;
-    margin-bottom: 8px;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #ddd;
+    margin-bottom: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
-  .album-listened {
-    font-size: 0.85em;
-    color: #ccc;
-    font-style: italic;
-  }
-
+  /* Sidebar Section */
   .sidebar {
     flex: 1;
-    background: #222;
-    padding: 20px;
-    border-left: 1px solid #444;
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 12px;
+    height: fit-content;
     position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
+    top: 20px;
   }
 
   .sidebar h2 {
     margin-top: 0;
-    font-size: 1.2em;
-    border-bottom: 1px solid #444;
-    padding-bottom: 5px;
+    font-size: 1.3rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
   }
 
-  .sidebar ul {
-    list-style: none;
+  .sidebar ol {
     padding-left: 0;
+    list-style: none;
+    counter-reset: album-counter;
   }
 
   .sidebar li {
-    padding: 5px 0;
+    counter-increment: album-counter;
+    padding: 12px 0;
+    border-bottom: 1px solid #222;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
   }
 
-  .sidebar .rank-number {
-    font-weight: bold;
-    margin-right: 5px;
+  .sidebar li::before {
+    content: counter(album-counter);
+    font-weight: 900;
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin-right: 15px;
+    min-width: 25px;
+  }
+
+  .sidebar li:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 850px) {
+    .container { flex-direction: column; }
+    .album-card { flex-direction: column; }
+    .album-card img { width: 100%; height: auto; }
+    .sidebar { position: static; height: auto; }
   }
 </style>
 </head>
@@ -106,19 +171,19 @@
 
 <div class="container">
   <div class="main">
-    <h1>Album Reviews</h1>
+    <h1>Latest Reviews</h1>
     <div id="albumsContainer"></div>
   </div>
+  
   <div class="sidebar">
-    <h2>Top Ranked Albums</h2>
-    <ul id="rankedList"></ul>
+    <h2>Leaderboard</h2>
+    <ol id="rankedList"></ol>
   </div>
 </div>
 
 <script>
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/pub?gid=0&single=true&output=csv';
 
-// Robust CSV parsing
 function parseCSV(text) {
   const lines = text.trim().split('\n');
   const rows = lines.map(line => {
@@ -127,7 +192,7 @@ function parseCSV(text) {
     let insideQuotes = false;
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
-      if (char === '"' && line[i+1] === '"') { // escaped quote
+      if (char === '"' && line[i+1] === '"') { 
         current += '"';
         i++;
       } else if (char === '"') {
@@ -163,16 +228,20 @@ async function fetchData() {
 function renderAlbums(albums) {
   const container = document.getElementById('albumsContainer');
   container.innerHTML = '';
+  // Sort by newest listened or just display feed
   albums.forEach(a => {
     const card = document.createElement('div');
     card.className = 'album-card';
     card.innerHTML = `
       ${a.photo ? `<img src="${a.photo}" alt="${a.album} cover">` : ''}
       <div class="album-info">
-        <div class="album-title">${a.album} (${a.year})</div>
-        <div class="album-artist">${a.artist}</div>
+        <div class="album-title">${a.album}</div>
+        <div class="album-artist">${a.artist} • ${a.year}</div>
         <div class="album-review">${a.review}</div>
-        ${a.listened ? `<div class="album-listened">Listened on: ${a.listened}</div>` : ''}
+        <div class="album-meta">
+           ${a.listened ? `Logged: ${a.listened}` : ''} 
+           ${a.rank ? ` | Score: <strong>${a.rank}</strong>` : ''}
+        </div>
       </div>
     `;
     container.appendChild(card);
@@ -180,13 +249,13 @@ function renderAlbums(albums) {
 }
 
 function renderSidebar(albums) {
-  const ul = document.getElementById('rankedList');
-  ul.innerHTML = '';
+  const ol = document.getElementById('rankedList');
+  ol.innerHTML = '';
   const sorted = albums.slice().sort((a,b) => b.rank - a.rank);
-  sorted.forEach((a, index) => {
+  sorted.forEach((a) => {
     const li = document.createElement('li');
-    li.innerHTML = `<span class="rank-number">${index+1}.</span> ${a.album}`;
-    ul.appendChild(li);
+    li.innerHTML = `<span>${a.album} <small style="color:#666">(${a.artist})</small></span>`;
+    ol.appendChild(li);
   });
 }
 
