@@ -37,28 +37,44 @@ const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5o
 fetch(sheetURL)
   .then(res => res.text())
   .then(data => {
+
     const rows = data.split("\n").slice(1);
-    const container = document.getElementById("albums");
+    const albums = [];
 
     rows.forEach(row => {
       const cols = row.split(",");
-      const album = cols[0];
-      const review = cols[1];
-      const cover = cols[2];
+
+      albums.push({
+        album: cols[0],
+        review: cols[1],
+        cover: cols[2],
+        year: cols[3],
+        ranking: parseFloat(cols[4])
+      });
+    });
+
+    // sort by ranking
+    albums.sort((a, b) => a.ranking - b.ranking);
+
+    const container = document.getElementById("albums");
+
+    albums.forEach(item => {
 
       const div = document.createElement("div");
       div.className = "album";
 
       div.innerHTML = `
-        <img src="${cover}">
+        <img src="${item.cover}">
         <div>
-          <h2>${album}</h2>
-          <p>${review}</p>
+          <h2>${item.album} (${item.year})</h2>
+          <p>${item.review}</p>
         </div>
       `;
 
       container.appendChild(div);
+
     });
+
   });
 </script>
 
