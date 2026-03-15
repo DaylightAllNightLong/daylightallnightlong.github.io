@@ -38,10 +38,9 @@
   <ul id="rankingList"></ul>
 </div>
 
-<!-- Include PapaParse for CSV parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
-const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/pub?output=csv'; // replace with your published CSV link
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/pub?output=csv';
 
 Papa.parse(csvUrl, {
   download: true,
@@ -51,7 +50,7 @@ Papa.parse(csvUrl, {
     const tableBody = document.querySelector('#albumTable tbody');
     const rankingList = document.getElementById('rankingList');
 
-    // Sort by Ranking (column F)
+    // Sort by Ranking descending (column name "Ranking")
     const rankedAlbums = [...data].sort((a, b) => parseFloat(b.Ranking) - parseFloat(a.Ranking));
 
     // Populate table
