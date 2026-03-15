@@ -9,7 +9,7 @@
     --bg: #0f0f0f;
     --card: #1a1a1a;
     --text: #ffffff;
-    --accent: #00ff88; /* Neon green accent */
+    --accent: #00ff88; 
     --muted: #888;
   }
 
@@ -50,12 +50,7 @@
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid #333;
-    transition: transform 0.2s ease;
-  }
-
-  .album-card:hover {
-    transform: scale(1.01);
-    border-color: var(--accent);
+    /* Removed hover transform */
   }
 
   .album-card img {
@@ -99,8 +94,6 @@
     margin-top: auto;
     font-size: 0.8rem;
     color: var(--muted);
-    display: flex;
-    gap: 15px;
   }
 
   .highlight { color: #fff; font-weight: bold; }
@@ -153,7 +146,7 @@
   @media (max-width: 900px) {
     .container { grid-template-columns: 1fr; }
     .album-card { flex-direction: column; }
-    .album-card img { width: 100%; height: 250px; }
+    .album-card img { width: 100%; height: auto; aspect-ratio: 1/1; }
     .sidebar { position: static; }
   }
 </style>
@@ -198,7 +191,7 @@ function parseCSV(text) {
     return row;
   });
   
-  rows.shift(); // Remove header row
+  rows.shift(); 
   return rows.map(r => ({
     album: r[0],
     artist: r[1],
@@ -206,7 +199,7 @@ function parseCSV(text) {
     photo: r[3],
     year: r[4],
     rank: parseFloat(r[5]),
-    listened: r[6] // Column G
+    listened: r[6]
   }));
 }
 
@@ -229,7 +222,6 @@ function renderUI(albums) {
         <p class="album-review">${a.review}</p>
         <div class="album-footer">
           <span>Logged: <span class="highlight">${a.listened || 'N/A'}</span></span>
-          <span>Score: <span class="highlight">${a.rank}/10</span></span>
         </div>
       </div>
     `;
@@ -245,7 +237,7 @@ function renderUI(albums) {
     item.innerHTML = `
       <div class="ranked-info">
         <span class="r-title">${a.album}</span>
-        <span class="r-artist">${a.artist} — ${a.rank}/10</span>
+        <span class="r-artist">${a.artist}</span>
       </div>
     `;
     sidebar.appendChild(item);
