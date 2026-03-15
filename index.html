@@ -30,6 +30,7 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 0 10px #000;
+    /* Removed any transitions that might cause visual 'pops' */
   }
 
   .album-card img {
@@ -95,11 +96,6 @@
   .sidebar li {
     padding: 5px 0;
   }
-
-  .sidebar .rank-number {
-    font-weight: bold;
-    margin-right: 5px;
-  }
 </style>
 </head>
 <body>
@@ -118,7 +114,6 @@
 <script>
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/pub?gid=0&single=true&output=csv';
 
-// Robust CSV parser
 function parseCSV(text) {
   const lines = text.trim().split('\n');
   const rows = lines.map(line => {
@@ -142,14 +137,14 @@ function parseCSV(text) {
     row.push(current);
     return row;
   });
-  rows.shift(); // remove header
+  rows.shift(); 
   return rows.map(r => ({
     album: r[0],
     artist: r[1],
     review: r[2],
     photo: r[3],
     year: r[4],
-    rank: parseFloat(r[5]), // only used for sidebar
+    rank: parseFloat(r[5]), 
     listened: r[6] || ''
   }));
 }
@@ -166,9 +161,10 @@ function renderAlbums(albums) {
   albums.forEach(a => {
     const card = document.createElement('div');
     card.className = 'album-card';
-    // IMPORTANT: Do not set title attributes or include rank in the card
+    
+    // Explicitly ensuring NO 'title' attribute is added here to prevent hover popups
     card.innerHTML = `
-      ${a.photo ? `<img src="${a.photo}" alt="">` : ''}
+      ${a.photo ? `<img src="${a.photo}" alt="${a.album}">` : ''}
       <div class="album-info">
         <div class="album-title">${a.album} (${a.year})</div>
         <div class="album-artist">${a.artist}</div>
@@ -183,6 +179,7 @@ function renderAlbums(albums) {
 function renderSidebar(albums) {
   const ul = document.getElementById('rankedList');
   ul.innerHTML = '';
+  // We keep rank logic here just for the sorting order of the sidebar
   const sorted = albums.slice().sort((a,b) => b.rank - a.rank);
   sorted.forEach((a, index) => {
     const li = document.createElement('li');
