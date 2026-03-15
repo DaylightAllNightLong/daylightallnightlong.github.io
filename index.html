@@ -2,172 +2,123 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Music Review Feed</title>
+<title>Album Reviews</title>
 <style>
-  :root {
-    --bg: #0f0f0f;
-    --card: #1a1a1a;
-    --text: #ffffff;
-    --accent: #00ff88; 
-    --muted: #888;
-  }
-
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #fff;
     margin: 0;
-    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
   }
 
   .container {
-    display: grid;
-    grid-template-columns: 1fr 350px;
-    max-width: 1200px;
-    margin: 0 auto;
-    gap: 40px;
-    padding: 40px 20px;
-  }
-
-  /* MAIN FEED */
-  .main h1 {
-    font-size: 2.5rem;
-    margin-bottom: 30px;
-    letter-spacing: -1px;
-  }
-
-  #albumsContainer {
     display: flex;
-    flex-direction: column;
-    gap: 25px;
+    flex: 1;
   }
 
-  /* THE CARD LAYOUT */
+  .main {
+    flex: 3;
+    padding: 20px;
+  }
+
   .album-card {
     display: flex;
-    background: var(--card);
-    border-radius: 12px;
+    background: #1a1a1a;
+    margin-bottom: 20px;
+    border-radius: 8px;
     overflow: hidden;
-    border: 1px solid #333;
-    /* Removed hover transform */
+    box-shadow: 0 0 10px #000;
   }
 
   .album-card img {
-    width: 200px;
-    height: 200px;
+    width: 150px;
+    height: 150px;
     object-fit: cover;
   }
 
-  .album-content {
-    padding: 24px;
+  .album-info {
+    padding: 15px;
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
 
-  .album-header {
-    margin-bottom: 10px;
-  }
-
   .album-title {
-    font-size: 1.5rem;
-    font-weight: 800;
+    font-size: 1.4em;
+    font-weight: bold;
     margin: 0;
   }
 
   .album-artist {
-    font-size: 1.1rem;
-    color: var(--accent);
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 1em;
+    color: #aaa;
+    margin: 5px 0 10px 0;
   }
 
   .album-review {
+    font-size: 0.95em;
+    line-height: 1.4em;
+    margin-bottom: 8px;
+  }
+
+  .album-listened {
+    font-size: 0.85em;
     color: #ccc;
-    font-size: 0.95rem;
-    margin: 10px 0;
+    font-style: italic;
   }
 
-  .album-footer {
-    margin-top: auto;
-    font-size: 0.8rem;
-    color: var(--muted);
-  }
-
-  .highlight { color: #fff; font-weight: bold; }
-
-  /* SIDEBAR RANKING */
   .sidebar {
-    background: var(--card);
-    padding: 30px;
-    border-radius: 12px;
-    height: fit-content;
+    flex: 1;
+    background: #222;
+    padding: 20px;
+    border-left: 1px solid #444;
     position: sticky;
-    top: 20px;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
   }
 
   .sidebar h2 {
-    font-size: 1.2rem;
-    text-transform: uppercase;
     margin-top: 0;
-    border-bottom: 2px solid var(--accent);
-    padding-bottom: 10px;
+    font-size: 1.2em;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
   }
 
-  .ranked-list {
+  .sidebar ul {
     list-style: none;
-    padding: 0;
-    counter-reset: rank-counter;
+    padding-left: 0;
   }
 
-  .ranked-item {
-    counter-increment: rank-counter;
-    padding: 15px 0;
-    border-bottom: 1px solid #333;
-    display: flex;
-    align-items: center;
+  .sidebar li {
+    padding: 5px 0;
   }
 
-  .ranked-item::before {
-    content: counter(rank-counter);
-    font-size: 1.5rem;
-    font-weight: 900;
-    color: var(--accent);
-    margin-right: 20px;
-    width: 30px;
-    text-align: center;
-  }
-
-  .ranked-info .r-title { font-weight: bold; display: block; }
-  .ranked-info .r-artist { font-size: 0.8rem; color: var(--muted); }
-
-  @media (max-width: 900px) {
-    .container { grid-template-columns: 1fr; }
-    .album-card { flex-direction: column; }
-    .album-card img { width: 100%; height: auto; aspect-ratio: 1/1; }
-    .sidebar { position: static; }
+  .sidebar .rank-number {
+    font-weight: bold;
+    margin-right: 5px;
   }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <main class="main">
-    <h1>Latest Reviews</h1>
-    <div id="albumsContainer">Loading reviews...</div>
-  </main>
-
-  <aside class="sidebar">
-    <h2>Leaderboard</h2>
-    <div id="rankedList" class="ranked-list"></div>
-  </aside>
+  <div class="main">
+    <h1>Album Reviews</h1>
+    <div id="albumsContainer"></div>
+  </div>
+  <div class="sidebar">
+    <h2>Top Ranked Albums</h2>
+    <ul id="rankedList"></ul>
+  </div>
 </div>
 
 <script>
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/pub?gid=0&single=true&output=csv';
 
+// Robust CSV parser
 function parseCSV(text) {
   const lines = text.trim().split('\n');
   const rows = lines.map(line => {
@@ -176,8 +127,9 @@ function parseCSV(text) {
     let insideQuotes = false;
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
-      if (char === '"' && line[i+1] === '"') { 
-        current += '"'; i++;
+      if (char === '"' && line[i+1] === '"') {
+        current += '"';
+        i++;
       } else if (char === '"') {
         insideQuotes = !insideQuotes;
       } else if (char === ',' && !insideQuotes) {
@@ -190,70 +142,59 @@ function parseCSV(text) {
     row.push(current);
     return row;
   });
-  
-  rows.shift(); 
+  rows.shift(); // remove header
   return rows.map(r => ({
     album: r[0],
     artist: r[1],
     review: r[2],
     photo: r[3],
     year: r[4],
-    rank: parseFloat(r[5]),
-    listened: r[6]
+    rank: parseFloat(r[5]), // only used for sidebar
+    listened: r[6] || ''
   }));
 }
 
-function renderUI(albums) {
+async function fetchData() {
+  const resp = await fetch(csvUrl);
+  const text = await resp.text();
+  return parseCSV(text);
+}
+
+function renderAlbums(albums) {
   const container = document.getElementById('albumsContainer');
-  const sidebar = document.getElementById('rankedList');
-  
-  // 1. Render Main Cards
   container.innerHTML = '';
   albums.forEach(a => {
     const card = document.createElement('div');
     card.className = 'album-card';
+    // IMPORTANT: Do not set title attributes or include rank in the card
     card.innerHTML = `
-      <img src="${a.photo || 'https://via.placeholder.com/200'}" alt="Cover">
-      <div class="album-content">
-        <div class="album-header">
-          <p class="album-artist">${a.artist}</p>
-          <h2 class="album-title">${a.album} (${a.year})</h2>
-        </div>
-        <p class="album-review">${a.review}</p>
-        <div class="album-footer">
-          <span>Logged: <span class="highlight">${a.listened || 'N/A'}</span></span>
-        </div>
+      ${a.photo ? `<img src="${a.photo}" alt="">` : ''}
+      <div class="album-info">
+        <div class="album-title">${a.album} (${a.year})</div>
+        <div class="album-artist">${a.artist}</div>
+        <div class="album-review">${a.review}</div>
+        ${a.listened ? `<div class="album-listened">Listened on: ${a.listened}</div>` : ''}
       </div>
     `;
     container.appendChild(card);
   });
+}
 
-  // 2. Render Sidebar with Numbers
-  sidebar.innerHTML = '';
-  const sorted = [...albums].sort((a,b) => b.rank - a.rank);
-  sorted.forEach(a => {
-    const item = document.createElement('div');
-    item.className = 'ranked-item';
-    item.innerHTML = `
-      <div class="ranked-info">
-        <span class="r-title">${a.album}</span>
-        <span class="r-artist">${a.artist}</span>
-      </div>
-    `;
-    sidebar.appendChild(item);
+function renderSidebar(albums) {
+  const ul = document.getElementById('rankedList');
+  ul.innerHTML = '';
+  const sorted = albums.slice().sort((a,b) => b.rank - a.rank);
+  sorted.forEach((a, index) => {
+    const li = document.createElement('li');
+    li.textContent = `${index+1}. ${a.album}`;
+    ul.appendChild(li);
   });
 }
 
 async function init() {
-  try {
-    const resp = await fetch(csvUrl);
-    const text = await resp.text();
-    const data = parseCSV(text);
-    renderUI(data);
-  } catch (e) {
-    document.getElementById('albumsContainer').innerText = "Error loading data.";
-    console.error(e);
-  }
+  const albums = await fetchData();
+  renderAlbums(albums);
+  renderSidebar(albums);
 }
 
 init();
