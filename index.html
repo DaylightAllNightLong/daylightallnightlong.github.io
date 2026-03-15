@@ -26,22 +26,10 @@
     background: #222;
     padding: 20px;
     border-left: 1px solid #444;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  th, td {
-    border-bottom: 1px solid #444;
-    padding: 10px;
-    text-align: left;
-  }
-  th {
-    background: #333;
-  }
-  img {
-    max-width: 100px;
-    height: auto;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
   }
   .sidebar h2 {
     margin-top: 0;
@@ -56,6 +44,37 @@
   .sidebar li {
     padding: 5px 0;
   }
+  .album-card {
+    display: flex;
+    background: #1a1a1a;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 10px #000;
+  }
+  .album-card img {
+    width: 150px;
+    object-fit: cover;
+  }
+  .album-info {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+  }
+  .album-title {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin: 0;
+  }
+  .album-artist {
+    font-size: 1em;
+    color: #aaa;
+    margin: 5px 0 10px 0;
+  }
+  .album-review {
+    font-size: 0.95em;
+    line-height: 1.4em;
+  }
 </style>
 </head>
 <body>
@@ -63,18 +82,7 @@
 <div class="container">
   <div class="main">
     <h1>Album Reviews</h1>
-    <table id="albumTable">
-      <thead>
-        <tr>
-          <th>Album</th>
-          <th>Artist</th>
-          <th>Review</th>
-          <th>Photo</th>
-          <th>Year</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div id="albumsContainer"></div>
   </div>
   <div class="sidebar">
     <h2>Top Ranked Albums</h2>
@@ -92,8 +100,8 @@ async function fetchData() {
 }
 
 function parseCSV(csvText) {
-  const rows = csvText.trim().split('\n').map(r => r.split(','));
-  const headers = rows.shift(); // remove header row
+  const rows = csvText.trim().split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/));
+  rows.shift(); // remove header
   return rows.map(row => ({
     album: row[0],
     artist: row[1],
@@ -104,26 +112,27 @@ function parseCSV(csvText) {
   }));
 }
 
-function renderTable(albums) {
-  const tbody = document.querySelector('#albumTable tbody');
-  tbody.innerHTML = '';
+function renderAlbums(albums) {
+  const container = document.getElementById('albumsContainer');
+  container.innerHTML = '';
   albums.forEach(a => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${a.album}</td>
-      <td>${a.artist}</td>
-      <td>${a.review}</td>
-      <td>${a.photo ? `<img src="${a.photo}" alt="${a.album}">` : ''}</td>
-      <td>${a.year}</td>
+    const card = document.createElement('div');
+    card.className = 'album-card';
+    card.innerHTML = `
+      ${a.photo ? `<img src="${a.photo}" alt="${a.album} cover">` : ''}
+      <div class="album-info">
+        <div class="album-title">${a.album} (${a.year})</div>
+        <div class="album-artist">${a.artist}</div>
+        <div class="album-review">${a.review}</div>
+      </div>
     `;
-    tbody.appendChild(tr);
+    container.appendChild(card);
   });
 }
 
 function renderSidebar(albums) {
   const ul = document.getElementById('rankedList');
   ul.innerHTML = '';
-  // Sort descending by rank
   const sorted = albums.slice().sort((a, b) => b.rank - a.rank);
   sorted.forEach(a => {
     const li = document.createElement('li');
@@ -135,7 +144,7 @@ function renderSidebar(albums) {
 async function init() {
   const csvText = await fetchData();
   const albums = parseCSV(csvText);
-  renderTable(albums);
+  renderAlbums(albums);
   renderSidebar(albums);
 }
 
