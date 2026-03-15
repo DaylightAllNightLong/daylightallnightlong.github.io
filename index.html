@@ -18,7 +18,6 @@
     flex: 1;
   }
 
-  /* Main album feed */
   .main {
     flex: 3;
     padding: 20px;
@@ -70,7 +69,6 @@
     font-style: italic;
   }
 
-  /* Sidebar */
   .sidebar {
     flex: 1;
     background: #222;
@@ -89,12 +87,18 @@
     padding-bottom: 5px;
   }
 
-  .sidebar ol {
-    padding-left: 20px;
+  .sidebar ul {
+    list-style: none;
+    padding-left: 0;
   }
 
   .sidebar li {
     padding: 5px 0;
+  }
+
+  .sidebar .rank-number {
+    font-weight: bold;
+    margin-right: 5px;
   }
 </style>
 </head>
@@ -107,31 +111,53 @@
   </div>
   <div class="sidebar">
     <h2>Top Ranked Albums</h2>
-    <ol id="rankedList"></ol>
+    <ul id="rankedList"></ul>
   </div>
 </div>
 
 <script>
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/pub?gid=0&single=true&output=csv';
 
-async function fetchData() {
-  const response = await fetch(csvUrl);
-  const data = await response.text();
-  return data;
+// Robust CSV parsing
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const rows = lines.map(line => {
+    const row = [];
+    let current = '';
+    let insideQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"' && line[i+1] === '"') { // escaped quote
+        current += '"';
+        i++;
+      } else if (char === '"') {
+        insideQuotes = !insideQuotes;
+      } else if (char === ',' && !insideQuotes) {
+        row.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    row.push(current);
+    return row;
+  });
+  const header = rows.shift();
+  return rows.map(r => ({
+    album: r[0],
+    artist: r[1],
+    review: r[2],
+    photo: r[3],
+    year: r[4],
+    rank: parseFloat(r[5]),
+    listened: r[6] || ''
+  }));
 }
 
-function parseCSV(csvText) {
-  const rows = csvText.trim().split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/));
-  rows.shift(); // remove header
-  return rows.map(row => ({
-    album: row[0],
-    artist: row[1],
-    review: row[2],
-    photo: row[3],
-    year: row[4],
-    rank: parseFloat(row[5]),
-    listened: row[6] // new column G
-  }));
+async function fetchData() {
+  const resp = await fetch(csvUrl);
+  const text = await resp.text();
+  return parseCSV(text);
 }
 
 function renderAlbums(albums) {
@@ -154,19 +180,18 @@ function renderAlbums(albums) {
 }
 
 function renderSidebar(albums) {
-  const ol = document.getElementById('rankedList');
-  ol.innerHTML = '';
-  const sorted = albums.slice().sort((a, b) => b.rank - a.rank);
-  sorted.forEach(a => {
+  const ul = document.getElementById('rankedList');
+  ul.innerHTML = '';
+  const sorted = albums.slice().sort((a,b) => b.rank - a.rank);
+  sorted.forEach((a, index) => {
     const li = document.createElement('li');
-    li.textContent = a.album;
-    ol.appendChild(li);
+    li.innerHTML = `<span class="rank-number">${index+1}.</span> ${a.album}`;
+    ul.appendChild(li);
   });
 }
 
 async function init() {
-  const csvText = await fetchData();
-  const albums = parseCSV(csvText);
+  const albums = await fetchData();
   renderAlbums(albums);
   renderSidebar(albums);
 }
