@@ -2,21 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Album Reviews</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 0; background: #111; color: #fff; display: flex; flex-direction: row; min-height: 100vh; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #111; color: #fff; display: flex; flex-direction: row; min-height: 100vh; }
   .content { flex: 3; padding: 20px; }
-  .ranking { flex: 1; padding: 20px; background: #222; border-left: 2px solid #444; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-  th, td { border: 1px solid #444; padding: 10px; text-align: left; }
-  th { background: #333; }
-  img { max-width: 100px; height: auto; display: block; }
-  h2 { margin-top: 0; }
-  ul { list-style: decimal; padding-left: 20px; }
-  li { margin-bottom: 10px; }
+  .ranking { flex: 1; padding: 20px; background: #1a1a1a; border-left: 2px solid #333; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #222; }
+  th, td { border: 1px solid #444; padding: 12px; text-align: left; }
+  th { background: #333; color: #00d1b2; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+  tr:hover { background: #2a2a2a; }
+  img { max-width: 80px; height: auto; border-radius: 4px; display: block; }
+  h2 { margin-top: 0; color: #00d1b2; border-bottom: 2px solid #333; padding-bottom: 10px; }
+  ul { list-style: decimal; padding-left: 25px; }
+  li { margin-bottom: 12px; font-weight: bold; color: #eee; }
+  .error-msg { color: #ff3860; font-weight: bold; padding: 20px; text-align: center; }
 </style>
 </head>
 <body>
+
 <div class="content">
   <h2>Album Reviews</h2>
   <table id="albumTable">
@@ -29,7 +33,8 @@
         <th>Year</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody>
+      </tbody>
   </table>
 </div>
 
@@ -39,46 +44,64 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
 <script>
+// The corrected direct CSV link (No API wrappers needed)
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/pub?output=csv';
 
 Papa.parse(csvUrl, {
   download: true,
   header: true,
+  skipEmptyLines: true,
   complete: function(results) {
     const data = results.data;
     const tableBody = document.querySelector('#albumTable tbody');
     const rankingList = document.getElementById('rankingList');
 
-    // Sort by Ranking descending (column name "Ranking")
-    const rankedAlbums = [...data].sort((a, b) => parseFloat(b.Ranking) - parseFloat(a.Ranking));
+    // Clear loading state
+    tableBody.innerHTML = '';
 
-    // Populate table
+    // Safety check: verify data is an array before sorting
+    if (!Array.isArray(data) || data.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="5" class="error-msg">No data found in the spreadsheet.</td></tr>';
+      return;
+    }
+
+    // Sort by Ranking (assumes you have a column named "Ranking")
+    // Use || 0 to handle rows with missing ranking values
+    const rankedAlbums = [...data].sort((a, b) => {
+      return parseFloat(b.Ranking || 0) - parseFloat(a.Ranking || 0);
+    });
+
+    // 1. Populate the Main Table
     data.forEach(album => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${album.Album}</td>
-        <td>${album.Artist}</td>
-        <td>${album.Review}</td>
-        <td>${album.Photo ? `<img src="${album.Photo}" alt="${album.Album} cover">` : ''}</td>
-        <td>${album.Year}</td>
+        <td><strong>${album.Album || 'Unknown'}</strong></td>
+        <td>${album.Artist || 'Unknown'}</td>
+        <td>${album.Review || ''}</td>
+        <td>${album.Photo ? `<img src="${album.Photo}" alt="Cover Art">` : 'No Image'}</td>
+        <td>${album.Year || ''}</td>
       `;
       tableBody.appendChild(row);
     });
 
-    // Populate ranking list
+    // 2. Populate the Top Ranked Sidebar
     rankedAlbums.forEach(album => {
-      const li = document.createElement('li');
-      li.textContent = album.Album;
-      rankingList.appendChild(li);
+      if (album.Album) {
+        const li = document.createElement('li');
+        li.textContent = album.Album;
+        rankingList.appendChild(li);
+      }
     });
   },
   error: function(err) {
-    console.error('Error loading CSV:', err);
-    const tableBody = document.querySelector('#albumTable tbody');
-    tableBody.innerHTML = '<tr><td colspan="5">Error loading data. Check console.</td></tr>';
+    console.error('Error fetching CSV:', err);
+    document.querySelector('#albumTable tbody').innerHTML = 
+      '<tr><td colspan="5" class="error-msg">Error loading data. Make sure your Google Sheet is "Published to the Web".</td></tr>';
   }
 });
 </script>
+
 </body>
 </html>
