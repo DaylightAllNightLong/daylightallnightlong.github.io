@@ -1,103 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Album Reviews</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: row;
-      min-height: 100vh;
-    }
-    .content { flex: 3; padding: 20px; }
-    .ranking { flex: 1; padding: 20px; background: #222; border-left: 2px solid #444; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th, td { border: 1px solid #444; padding: 10px; text-align: left; }
-    th { background: #333; }
-    img { max-width: 100px; height: auto; display: block; }
-    h2 { margin-top: 0; }
-    ul { list-style: decimal; padding-left: 20px; }
-    li { margin-bottom: 10px; }
-  </style>
+<meta charset="UTF-8">
+<title>Album Reviews</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; background: #111; color: #fff; display: flex; flex-direction: row; min-height: 100vh; }
+  .content { flex: 3; padding: 20px; }
+  .ranking { flex: 1; padding: 20px; background: #222; border-left: 2px solid #444; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th, td { border: 1px solid #444; padding: 10px; text-align: left; }
+  th { background: #333; }
+  img { max-width: 100px; height: auto; display: block; }
+  h2 { margin-top: 0; }
+  ul { list-style: decimal; padding-left: 20px; }
+  li { margin-bottom: 10px; }
+</style>
 </head>
 <body>
-  <div class="content">
-    <h2>Album Reviews</h2>
-    <table id="albumTable">
-      <thead>
-        <tr>
-          <th>Album</th>
-          <th>Artist</th>
-          <th>Review</th>
-          <th>Photo</th>
-          <th>Year</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<div class="content">
+  <h2>Album Reviews</h2>
+  <table id="albumTable">
+    <thead>
+      <tr>
+        <th>Album</th>
+        <th>Artist</th>
+        <th>Review</th>
+        <th>Photo</th>
+        <th>Year</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-  <div class="ranking">
-    <h2>Top Ranked Albums</h2>
-    <ul id="rankingList"></ul>
-  </div>
+<div class="ranking">
+  <h2>Top Ranked Albums</h2>
+  <ul id="rankingList"></ul>
+</div>
 
-  <script>
-    const sheetUrl = 'https://opensheet.elk.sh/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/Sheet1';
+<!-- Include PapaParse for CSV parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/pub?output=csv'; // replace with your published CSV link
 
-    fetch(sheetUrl)
-      .then(response => response.json())
-      .then(data => {
-        console.log('Data loaded from sheet:', data); // Debug
+Papa.parse(csvUrl, {
+  download: true,
+  header: true,
+  complete: function(results) {
+    const data = results.data;
+    const tableBody = document.querySelector('#albumTable tbody');
+    const rankingList = document.getElementById('rankingList');
 
-        if (!data || !data.length) {
-          throw new Error('No data found in sheet.');
-        }
+    // Sort by Ranking (column F)
+    const rankedAlbums = [...data].sort((a, b) => parseFloat(b.Ranking) - parseFloat(a.Ranking));
 
-        const tableBody = document.querySelector('#albumTable tbody');
-        const rankingList = document.getElementById('rankingList');
+    // Populate table
+    data.forEach(album => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${album.Album}</td>
+        <td>${album.Artist}</td>
+        <td>${album.Review}</td>
+        <td>${album.Photo ? `<img src="${album.Photo}" alt="${album.Album} cover">` : ''}</td>
+        <td>${album.Year}</td>
+      `;
+      tableBody.appendChild(row);
+    });
 
-        // Use the correct column names from your sheet
-        // Adjust these if your sheet headers are different
-        const ALBUM = Object.keys(data[0])[0]; // Column A
-        const ARTIST = Object.keys(data[0])[1]; // Column B
-        const REVIEW = Object.keys(data[0])[2]; // Column C
-        const PHOTO = Object.keys(data[0])[3]; // Column D
-        const YEAR = Object.keys(data[0])[4]; // Column E
-        const RANK = Object.keys(data[0])[5]; // Column F
-
-        // Sort albums by ranking descending
-        const rankedAlbums = [...data].sort((a, b) => parseFloat(b[RANK]) - parseFloat(a[RANK]));
-
-        // Populate table
-        data.forEach(album => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${album[ALBUM]}</td>
-            <td>${album[ARTIST]}</td>
-            <td>${album[REVIEW]}</td>
-            <td>${album[PHOTO] ? `<img src="${album[PHOTO]}" alt="${album[ALBUM]} cover">` : ''}</td>
-            <td>${album[YEAR]}</td>
-          `;
-          tableBody.appendChild(row);
-        });
-
-        // Populate ranking list
-        rankedAlbums.forEach(album => {
-          const li = document.createElement('li');
-          li.textContent = album[ALBUM];
-          rankingList.appendChild(li);
-        });
-      })
-      .catch(error => {
-        console.error('Error fetching album data:', error);
-        const tableBody = document.querySelector('#albumTable tbody');
-        tableBody.innerHTML = '<tr><td colspan="5">Error loading data. Check console.</td></tr>';
-      });
-  </script>
+    // Populate ranking list
+    rankedAlbums.forEach(album => {
+      const li = document.createElement('li');
+      li.textContent = album.Album;
+      rankingList.appendChild(li);
+    });
+  },
+  error: function(err) {
+    console.error('Error loading CSV:', err);
+    const tableBody = document.querySelector('#albumTable tbody');
+    tableBody.innerHTML = '<tr><td colspan="5">Error loading data. Check console.</td></tr>';
+  }
+});
+</script>
 </body>
 </html>
