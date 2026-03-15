@@ -5,146 +5,103 @@
 <title>Album Reviews</title>
 <style>
   body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    max-width: 1100px;
+    font-family: Arial, sans-serif;
+    max-width: 1000px;
     margin: auto;
     background: #111;
     color: white;
     padding: 20px;
   }
-
-  h1 {
-    border-bottom: 2px solid #00d1b2;
-    padding-bottom: 10px;
-    color: #00d1b2;
-  }
-
-  .page {
-    display: flex;
-    gap: 40px;
-  }
-
-  #albums {
-    flex: 3;
-  }
-
+  .page { display: flex; gap: 40px; }
+  #albums { flex: 3; }
   #ranking {
-    flex: 1.2;
-    background: #1a1a1a;
-    padding: 20px;
-    border-radius: 8px;
+    flex: 1;
+    border-left: 1px solid #444;
+    padding-left: 20px;
     height: fit-content;
     position: sticky;
     top: 20px;
   }
-
   .album {
-    border-bottom: 1px solid #333;
-    padding: 25px 0;
+    border-bottom: 1px solid #444;
+    padding: 20px 0;
     display: flex;
-    gap: 25px;
+    gap: 20px;
     align-items: center;
   }
-
-  .album-info h2 {
-    margin: 0 0 10px 0;
-    font-size: 1.5rem;
-  }
-
-  .year {
-    color: #888;
-    font-weight: normal;
-    font-size: 1.1rem;
-  }
-
-  .review-text {
-    line-height: 1.6;
-    color: #ccc;
-  }
-
   img {
-    width: 150px;
-    height: 150px;
+    width: 120px;
+    height: 120px;
     object-fit: cover;
+    background: #222;
     border-radius: 4px;
-    background: #222; /* Placeholder color while loading */
   }
-
-  .ranking-item {
-    padding: 8px 0;
-    border-bottom: 1px solid #333;
-    font-size: 0.95rem;
-  }
-
-  .rank-number {
-    color: #00d1b2;
-    font-weight: bold;
-    margin-right: 10px;
-  }
+  h2 { margin: 0 0 10px 0; }
+  .year { color: #888; font-weight: normal; }
+  .rank-item { margin-bottom: 10px; font-size: 0.9rem; }
+  .rank-num { color: #00d1b2; font-weight: bold; margin-right: 8px; }
 </style>
 </head>
-
 <body>
 
-<h1>My Album Reviews</h1>
+<h1>Album Reviews</h1>
 
 <div class="page">
   <div id="albums">Loading reviews...</div>
-
   <div id="ranking">
-    <h2>Top Rankings</h2>
+    <h2>Ranking</h2>
     <div id="ranking-list"></div>
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
 <script>
-// Updated URL: Removed the :1 and ensured it points to the correct ID
-const sheetURL = "https://opensheet.elk.sh/1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/Sheet1";
+  // This is your "Publish to Web" ID converted to a direct CSV download link
+  const sheetID = "2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3";
+  const csvURL = `https://docs.google.com/spreadsheets/d/e/${sheetID}/pub?output=csv`;
 
-fetch(sheetURL)
-  .then(res => {
-    if (!res.ok) throw new Error("Could not fetch data");
-    return res.json();
-  })
-  .then(albums => {
-    const albumContainer = document.getElementById("albums");
-    const rankingList = document.getElementById("ranking-list");
-    
-    // Clear the loading message
-    albumContainer.innerHTML = "";
+  Papa.parse(csvURL, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      const albums = results.data;
+      const albumContainer = document.getElementById("albums");
+      const rankingList = document.getElementById("ranking-list");
 
-    // 1. Create a copy and sort it for the Sidebar (Highest Rank first)
-    // This assumes your "Ranking" column uses numbers (e.g., 10, 9, 8)
-    const sortedAlbums = [...albums].sort((a, b) => parseFloat(b.Ranking) - parseFloat(a.Ranking));
+      // Clear loading text
+      albumContainer.innerHTML = "";
 
-    // 2. Display the Main Feed (Original order from sheet)
-    albums.forEach((item) => {
-      const div = document.createElement("div");
-      div.className = "album";
+      // 1. Main List (Original Order)
+      albums.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "album";
+        div.innerHTML = `
+          <img src="${item.Cover || item.Photo || ''}" alt="Cover">
+          <div>
+            <h2>${item.Album} <span class="year">(${item.Year || ''})</span></h2>
+            <p>${item.Review || ''}</p>
+          </div>
+        `;
+        albumContainer.appendChild(div);
+      });
 
-      // Note: Make sure your column names match these exactly: Cover, Album, Year, Review
-      div.innerHTML = `
-        <img src="${item.Cover || 'https://via.placeholder.com/150'}" alt="Cover Art">
-        <div class="album-info">
-          <h2>${item.Album} <span class="year">(${item.Year || 'N/A'})</span></h2>
-          <p class="review-text">${item.Review || 'No review provided.'}</p>
-        </div>
-      `;
-      albumContainer.appendChild(div);
-    });
-
-    // 3. Display the Sidebar Rankings
-    sortedAlbums.forEach((item, i) => {
-      const p = document.createElement("div");
-      p.className = "ranking-item";
-      p.innerHTML = `<span class="rank-number">#${i + 1}</span> ${item.Album}`;
-      rankingList.appendChild(p);
-    });
-
-  })
-  .catch(err => {
-    console.error(err);
-    document.getElementById("albums").innerHTML = "<h2>Error loading data. Check if the Sheet ID is correct and published to web.</h2>";
+      // 2. Ranking Sidebar (Sorted by the 'Ranking' column)
+      const sorted = [...albums].sort((a, b) => parseFloat(b.Ranking || 0) - parseFloat(a.Ranking || 0));
+      
+      sorted.forEach((item, i) => {
+        if(item.Album) {
+          const p = document.createElement("div");
+          p.className = "rank-item";
+          p.innerHTML = `<span class="rank-num">#${i + 1}</span> ${item.Album}`;
+          rankingList.appendChild(p);
+        }
+      });
+    },
+    error: function(err) {
+      document.getElementById("albums").innerHTML = "Error loading data. Make sure 'Publish to Web' is set to CSV.";
+    }
   });
 </script>
 
