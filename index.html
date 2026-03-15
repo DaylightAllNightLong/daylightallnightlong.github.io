@@ -23,6 +23,7 @@
     padding: 20px;
   }
 
+  /* Standard card styling with NO hover effects */
   .album-card {
     display: flex;
     background: #1a1a1a;
@@ -30,7 +31,7 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 0 10px #000;
-    /* Removed any transitions that might cause visual 'pops' */
+    pointer-events: auto; /* Ensures normal behavior without tooltips */
   }
 
   .album-card img {
@@ -162,9 +163,10 @@ function renderAlbums(albums) {
     const card = document.createElement('div');
     card.className = 'album-card';
     
-    // Explicitly ensuring NO 'title' attribute is added here to prevent hover popups
+    // REMOVED ALL 'title' ATTRIBUTES: This stops the browser from "popping" text on hover.
+    // REMOVED 'a.rank' from this section: The score will no longer appear on the card.
     card.innerHTML = `
-      ${a.photo ? `<img src="${a.photo}" alt="${a.album}">` : ''}
+      ${a.photo ? `<img src="${a.photo}" alt="">` : ''}
       <div class="album-info">
         <div class="album-title">${a.album} (${a.year})</div>
         <div class="album-artist">${a.artist}</div>
@@ -179,7 +181,7 @@ function renderAlbums(albums) {
 function renderSidebar(albums) {
   const ul = document.getElementById('rankedList');
   ul.innerHTML = '';
-  // We keep rank logic here just for the sorting order of the sidebar
+  // Rank is ONLY used here to sort the list and show the 1, 2, 3 numbering.
   const sorted = albums.slice().sort((a,b) => b.rank - a.rank);
   sorted.forEach((a, index) => {
     const li = document.createElement('li');
