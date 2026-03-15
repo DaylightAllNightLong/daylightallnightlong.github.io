@@ -61,6 +61,13 @@
   .album-review {
     font-size: 0.95em;
     line-height: 1.4em;
+    margin-bottom: 8px;
+  }
+
+  .album-listened {
+    font-size: 0.85em;
+    color: #ccc;
+    font-style: italic;
   }
 
   /* Sidebar */
@@ -122,7 +129,8 @@ function parseCSV(csvText) {
     review: row[2],
     photo: row[3],
     year: row[4],
-    rank: parseFloat(row[5])
+    rank: parseFloat(row[5]),
+    listened: row[6] // new column G
   }));
 }
 
@@ -138,6 +146,7 @@ function renderAlbums(albums) {
         <div class="album-title">${a.album} (${a.year})</div>
         <div class="album-artist">${a.artist}</div>
         <div class="album-review">${a.review}</div>
+        ${a.listened ? `<div class="album-listened">Listened on: ${a.listened}</div>` : ''}
       </div>
     `;
     container.appendChild(card);
