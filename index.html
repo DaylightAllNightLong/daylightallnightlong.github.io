@@ -1,85 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Album Reviews</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 1000px; margin: auto; background: #111; color: white; padding: 20px; }
-        .page { display: flex; gap: 40px; margin-top: 20px; }
-        #albums { flex: 3; }
-        #ranking { flex: 1; border-left: 1px solid #444; padding-left: 20px; min-width: 250px; }
-        .album { border-bottom: 1px solid #444; padding: 20px 0; display: flex; gap: 20px; }
-        img { width: 120px; height: 120px; object-fit: cover; border-radius: 4px; background: #222; }
-        .year-text { color: #888; font-weight: normal; }
-        .rank-row { margin-bottom: 8px; font-size: 0.95em; border-bottom: 1px solid #222; padding-bottom: 4px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Album Reviews</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: row;
+      min-height: 100vh;
+    }
+
+    .content {
+      flex: 3;
+      padding: 20px;
+    }
+
+    .ranking {
+      flex: 1;
+      padding: 20px;
+      background: #222;
+      border-left: 2px solid #444;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      border: 1px solid #444;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #333;
+    }
+
+    img {
+      max-width: 100px;
+      height: auto;
+      display: block;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    ul {
+      list-style: decimal;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
+  <div class="content">
+    <h2>Album Reviews</h2>
+    <table id="albumTable">
+      <thead>
+        <tr>
+          <th>Album</th>
+          <th>Artist</th>
+          <th>Review</th>
+          <th>Photo</th>
+          <th>Year</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Album rows will be injected here -->
+      </tbody>
+    </table>
+  </div>
 
-    <h1>Album Reviews</h1>
+  <div class="ranking">
+    <h2>Top Ranked Albums</h2>
+    <ul id="rankingList">
+      <!-- Ranking list will be injected here -->
+    </ul>
+  </div>
 
-    <div class="page">
-        <div id="albums">Loading albums...</div>
-        <div id="ranking">
-            <h2 style="margin-top:0">Ranking</h2>
-            <div id="ranking-list"></div>
-        </div>
-    </div>
+  <script>
+    const sheetUrl = 'https://opensheet.elk.sh/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/Sheet1';
 
-<script>
-    const sheetURL = "https://opensheet.elk.sh/2PACX-1vSQcqFaWF-hb5omsFhFoAQaWiRwFwx2JpZp9AnQOp-YZi3zU04osljRIiYivhRccyCvCpT4e3H5yqM3/Sheet1";
+    fetch(sheetUrl)
+      .then(response => response.json())
+      .then(data => {
+        const tableBody = document.querySelector('#albumTable tbody');
+        const rankingList = document.getElementById('rankingList');
 
-    fetch(sheetURL)
-    .then(res => res.json())
-    .then(data => {
-        const albumContainer = document.getElementById("albums");
-        const rankingList = document.getElementById("ranking-list");
-        albumContainer.innerHTML = "";
+        // Sort albums by ranking (F) descending
+        const rankedAlbums = [...data].sort((a, b) => parseFloat(b['F']) - parseFloat(a['F']));
 
-        // This helper function finds the correct column even if casing is wrong
-        const getVal = (obj, key) => {
-            const foundKey = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
-            return foundKey ? obj[foundKey] : "";
-        };
-
-        // Sort by ranking
-        data.sort((a, b) => {
-            let rankA = parseInt(getVal(a, "Ranking")) || 999;
-            let rankB = parseInt(getVal(b, "Ranking")) || 999;
-            return rankA - rankB;
+        // Populate table
+        data.forEach(album => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${album['A']}</td>
+            <td>${album['B']}</td>
+            <td>${album['C']}</td>
+            <td>${album['D'] ? `<img src="${album['D']}" alt="${album['A']} cover">` : ''}</td>
+            <td>${album['E']}</td>
+          `;
+          tableBody.appendChild(row);
         });
 
-        data.forEach((item, i) => {
-            // Get values safely
-            const title = getVal(item, "Album");
-            const year = getVal(item, "Year");
-            const cover = getVal(item, "Cover");
-            const review = getVal(item, "Review");
-
-            // 1. Build Main List
-            const div = document.createElement("div");
-            div.className = "album";
-            div.innerHTML = `
-                <img src="${cover}" alt="Cover">
-                <div>
-                    <h2 style="margin:0">${title} <span class="year-text">(${year})</span></h2>
-                    <p>${review}</p>
-                </div>
-            `;
-            albumContainer.appendChild(div);
-
-            // 2. Build Sidebar Ranking
-            const rankDiv = document.createElement("div");
-            rankDiv.className = "rank-row";
-            rankDiv.innerHTML = `<strong>${i + 1}.</strong> ${title}`;
-            rankingList.appendChild(rankDiv);
+        // Populate ranking list
+        rankedAlbums.forEach(album => {
+          const li = document.createElement('li');
+          li.textContent = album['A'];
+          rankingList.appendChild(li);
         });
-    })
-    .catch(err => {
-        console.error(err);
-        document.getElementById("albums").innerText = "Error loading data.";
-    });
-</script>
-
+      })
+      .catch(error => {
+        console.error('Error fetching album data:', error);
+      });
+  </script>
 </body>
 </html>
