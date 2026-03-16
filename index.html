@@ -32,10 +32,26 @@
     box-shadow: 0 0 10px #000;
   }
 
-  .album-card img {
+  /* NEW: image column */
+  .album-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 150px;
+  }
+
+  .album-left img {
     width: 150px;
     height: 150px;
     object-fit: cover;
+  }
+
+  .album-listened {
+    font-size: 0.8em;
+    color: #bbb;
+    margin-top: 6px;
+    text-align: center;
+    font-style: italic;
   }
 
   .album-info {
@@ -43,7 +59,6 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    position: relative;
   }
 
   .album-title {
@@ -64,13 +79,6 @@
     margin-bottom: 8px;
   }
 
-  .album-listened {
-    font-size: 0.85em;
-    color: #ccc;
-    font-style: italic;
-  }
-
-  /* MUSIC FOR STAMP */
   .music-stamp {
     display: inline-block;
     margin-top: 6px;
@@ -186,15 +194,17 @@ function renderAlbums(albums) {
     card.className = 'album-card';
 
     card.innerHTML = `
-      ${a.photo ? `<img src="${a.photo}" alt="">` : ''}
+      <div class="album-left">
+        ${a.photo ? `<img src="${a.photo}" alt="">` : ''}
+        ${a.listened ? `<div class="album-listened">Listened on ${a.listened}</div>` : ''}
+      </div>
+
       <div class="album-info">
         <div class="album-title">${a.album} (${a.year})</div>
         <div class="album-artist">${a.artist}</div>
         <div class="album-review">${a.review}</div>
 
         ${a.musicFor ? `<div class="music-stamp">Music for: ${a.musicFor}</div>` : ''}
-
-        ${a.listened ? `<div class="album-listened">Listened on: ${a.listened}</div>` : ''}
       </div>
     `;
 
