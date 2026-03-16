@@ -227,7 +227,11 @@ function renderSidebar(albums) {
 }
 
 async function init() {
-  const albums = await fetchData();
+  let albums = await fetchData();
+
+  // Show newest spreadsheet entries first
+  albums = albums.reverse();
+
   renderAlbums(albums);
   renderSidebar(albums);
 }
