@@ -23,7 +23,6 @@
     padding: 20px;
   }
 
-  /* Standard card styling with NO hover effects */
   .album-card {
     display: flex;
     background: #1a1a1a;
@@ -31,7 +30,6 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 0 10px #000;
-    pointer-events: auto; /* Ensures normal behavior without tooltips */
   }
 
   .album-card img {
@@ -45,6 +43,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    position: relative;
   }
 
   .album-title {
@@ -69,6 +68,21 @@
     font-size: 0.85em;
     color: #ccc;
     font-style: italic;
+  }
+
+  /* MUSIC FOR STAMP */
+  .music-stamp {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 4px 10px;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 2px dashed #ff4d4d;
+    color: #ff4d4d;
+    border-radius: 4px;
+    transform: rotate(-2deg);
+    width: fit-content;
   }
 
   .sidebar {
@@ -106,6 +120,7 @@
     <h1>Album Reviews</h1>
     <div id="albumsContainer"></div>
   </div>
+
   <div class="sidebar">
     <h2>Top Ranked Albums</h2>
     <ul id="rankedList"></ul>
@@ -121,8 +136,10 @@ function parseCSV(text) {
     const row = [];
     let current = '';
     let insideQuotes = false;
+
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
+
       if (char === '"' && line[i+1] === '"') {
         current += '"';
         i++;
@@ -135,18 +152,22 @@ function parseCSV(text) {
         current += char;
       }
     }
+
     row.push(current);
     return row;
   });
-  rows.shift(); 
+
+  rows.shift();
+
   return rows.map(r => ({
     album: r[0],
     artist: r[1],
     review: r[2],
     photo: r[3],
     year: r[4],
-    rank: parseFloat(r[5]), 
-    listened: r[6] || ''
+    rank: parseFloat(r[5]),
+    listened: r[6] || '',
+    musicFor: r[7] || ''
   }));
 }
 
@@ -159,21 +180,24 @@ async function fetchData() {
 function renderAlbums(albums) {
   const container = document.getElementById('albumsContainer');
   container.innerHTML = '';
+
   albums.forEach(a => {
     const card = document.createElement('div');
     card.className = 'album-card';
-    
-    // REMOVED ALL 'title' ATTRIBUTES: This stops the browser from "popping" text on hover.
-    // REMOVED 'a.rank' from this section: The score will no longer appear on the card.
+
     card.innerHTML = `
       ${a.photo ? `<img src="${a.photo}" alt="">` : ''}
       <div class="album-info">
         <div class="album-title">${a.album} (${a.year})</div>
         <div class="album-artist">${a.artist}</div>
         <div class="album-review">${a.review}</div>
+
+        ${a.musicFor ? `<div class="music-stamp">Music for: ${a.musicFor}</div>` : ''}
+
         ${a.listened ? `<div class="album-listened">Listened on: ${a.listened}</div>` : ''}
       </div>
     `;
+
     container.appendChild(card);
   });
 }
@@ -181,8 +205,9 @@ function renderAlbums(albums) {
 function renderSidebar(albums) {
   const ul = document.getElementById('rankedList');
   ul.innerHTML = '';
-  // Rank is ONLY used here to sort the list and show the 1, 2, 3 numbering.
+
   const sorted = albums.slice().sort((a,b) => b.rank - a.rank);
+
   sorted.forEach((a, index) => {
     const li = document.createElement('li');
     li.textContent = `${index+1}. ${a.album}`;
